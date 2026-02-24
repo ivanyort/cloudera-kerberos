@@ -92,7 +92,31 @@ hive_ports_ready() {
     (echo >"/dev/tcp/127.0.0.1/10000") >/dev/null 2>&1
 }
 
+cleanup_stale_pidfile() {
+  local pidfile="$1"
+  local pid
+  [ -f "$pidfile" ] || return 0
+
+  pid="$(tr -cd '0-9' < "$pidfile" || true)"
+  if [ -z "$pid" ] || ! kill -0 "$pid" >/dev/null 2>&1; then
+    rm -f "$pidfile"
+  fi
+}
+
+cleanup_hive_metastore_pidfiles() {
+  local pidfile
+  for pidfile in \
+    /var/run/hive/*metastore*.pid \
+    /var/run/*metastore*.pid \
+    /var/run/hive-metastore*.pid
+  do
+    [ -e "$pidfile" ] || continue
+    cleanup_stale_pidfile "$pidfile"
+  done
+}
+
 restart_hive_services() {
+  cleanup_hive_metastore_pidfiles
   service hive-metastore restart >/dev/null 2>&1 || true
   service hive-server2 restart >/dev/null 2>&1 || true
 }
