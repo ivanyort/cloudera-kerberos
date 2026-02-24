@@ -14,6 +14,25 @@ wait_for_kdc() {
   done
 }
 
+ensure_kerberos_tools() {
+  if command -v kinit >/dev/null 2>&1 && command -v klist >/dev/null 2>&1; then
+    return 0
+  fi
+
+  echo "Kerberos client tools not found. Trying to install..."
+  if command -v yum >/dev/null 2>&1; then
+    yum install -y krb5-workstation || true
+  elif command -v apt-get >/dev/null 2>&1; then
+    apt-get update && apt-get install -y --no-install-recommends krb5-user || true
+  fi
+
+  if command -v kinit >/dev/null 2>&1 && command -v klist >/dev/null 2>&1; then
+    echo "Kerberos client tools installed."
+  else
+    echo "Warning: Kerberos client tools are still unavailable. Validation commands with kinit/klist may fail."
+  fi
+}
+
 prepare_keytabs() {
   mkdir -p /etc/security/keytabs
   [ -f /keytabs/hdfs.keytab ] && cp /keytabs/hdfs.keytab /etc/security/keytabs/hdfs.headless.keytab
@@ -25,11 +44,16 @@ prepare_keytabs() {
 }
 
 bootstrap_ticket() {
-  printf '%s\n' "$ADMIN_PW" | kinit "${ADMIN_PRINCIPAL}@${REALM}" || true
-  klist || true
+  if command -v kinit >/dev/null 2>&1; then
+    printf '%s\n' "$ADMIN_PW" | kinit "${ADMIN_PRINCIPAL}@${REALM}" || true
+  fi
+  if command -v klist >/dev/null 2>&1; then
+    klist || true
+  fi
 }
 
 wait_for_kdc
+ensure_kerberos_tools
 prepare_keytabs
 bootstrap_ticket
 

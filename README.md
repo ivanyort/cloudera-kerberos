@@ -58,6 +58,18 @@ Testar autenticação com usuário:
 docker exec -it cloudera bash -lc "echo cloudera123 | kinit cloudera@CLOUDERA.LOCAL && klist"
 ```
 
+Se `klist`/`kinit` não existirem no container `cloudera`, reinicie o serviço para executar a tentativa automática de instalação via `entrypoint`:
+
+```bash
+docker compose restart cloudera
+```
+
+Se ainda faltar, instale manualmente:
+
+```bash
+docker exec -it cloudera bash -lc "yum install -y krb5-workstation || (apt-get update && apt-get install -y --no-install-recommends krb5-user)"
+```
+
 ## Portas expostas
 
 - `7180`: Cloudera Manager
@@ -95,9 +107,38 @@ sudo grubby --args="vsyscall=emulate" --update-kernel=ALL
 sudo reboot
 ```
 
+Exemplo em WSL2 (Windows):
+
+1. Feche todas as distribuições WSL:
+
+```powershell
+wsl --shutdown
+```
+
+2. Edite `%UserProfile%\.wslconfig` e adicione:
+
+```ini
+[wsl2]
+kernelCommandLine=vsyscall=emulate
+```
+
+3. Inicie o WSL novamente e valide:
+
+```bash
+uname -a
+docker run --rm withinboredom/cloudera:quickstart /bin/bash -lc "echo ok"
+```
+
 Depois do reboot:
 
 ```bash
 docker compose down -v
 docker compose up -d
+```
+
+Se aparecer `klist: command not found` ou `kinit: command not found` no container `cloudera`, use os passos de instalação da seção **Validar Kerberos** e depois rode:
+
+```bash
+docker exec -it cloudera bash -lc "kinit -V cloudera@CLOUDERA.LOCAL"
+docker exec -it cloudera bash -lc "klist"
 ```
