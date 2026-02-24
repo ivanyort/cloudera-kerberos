@@ -60,6 +60,47 @@ prepare_hive_runtime() {
   done
 }
 
+fix_hive_metastore_status_check() {
+  local init_script="/etc/init.d/hive-metastore"
+  local tmp_file
+  [ -f "$init_script" ] || return 0
+
+  # Legacy init script can report FAILED when PID file drifts from the live metastore JVM.
+  grep -q "CODEX_METASTORE_STATUS_FIX" "$init_script" && return 0
+  tmp_file="$(mktemp)"
+  awk '
+    BEGIN { in_func=0 }
+    /^checkstatusofproc\(\)\{/ {
+      print "checkstatusofproc(){"
+      print "  # CODEX_METASTORE_STATUS_FIX: fallback to live HiveMetaStore JVM when PID file is stale."
+      print "  pidofproc -p $PIDFILE $PROC_NAME > /dev/null"
+      print "  local status=$?"
+      print "  if [ \"$status\" -ne \"$STATUS_RUNNING\" ]; then"
+      print "    local live_pid"
+      print "    live_pid=\"$(ps -eo pid,args | awk '\''/org.apache.hadoop.hive.metastore.HiveMetaStore/ && !/awk/ {print $1; exit}'\'')\""
+      print "    if [ -n \"$live_pid\" ]; then"
+      print "      echo \"$live_pid\" > \"$PIDFILE\""
+      print "      return \"$STATUS_RUNNING\""
+      print "    fi"
+      print "  fi"
+      print "  return \"$status\""
+      print "}"
+      in_func=1
+      next
+    }
+    in_func == 1 {
+      if ($0 ~ /^}/) {
+        in_func=0
+      }
+      next
+    }
+    { print }
+  ' "$init_script" > "$tmp_file"
+
+  mv "$tmp_file" "$init_script"
+  chmod 755 "$init_script"
+}
+
 leave_hdfs_safemode() {
   local attempts=36
   local i
@@ -178,6 +219,7 @@ wait_for_kdc
 ensure_kerberos_tools
 prepare_keytabs
 prepare_hive_runtime
+fix_hive_metastore_status_check
 bootstrap_ticket
 configure_cloudera_manager_start
 
