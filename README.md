@@ -4,6 +4,7 @@ Este projeto sobe um ambiente com:
 
 - `kdc`: servidor MIT Kerberos (realm `CLOUDERA.LOCAL`)
 - `cloudera`: nó Cloudera QuickStart integrado ao KDC
+- `kerberos-client`: cliente auxiliar para validações de `kinit`/`klist` sem depender da imagem legacy do QuickStart
 
 ## Pré-requisitos
 
