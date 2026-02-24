@@ -13,8 +13,7 @@ Este projeto sobe um ambiente com:
 ## Subir o ambiente
 
 ```bash
-docker compose build kdc kerberos-client
-docker pull withinboredom/cloudera:quickstart
+docker compose build kdc cloudera kerberos-client
 docker compose up -d
 ```
 
@@ -22,7 +21,7 @@ Se aparecer `container kdc exited (1)`, limpe estado antigo e suba de novo:
 
 ```bash
 docker compose down -v
-docker compose build --no-cache kdc kerberos-client
+docker compose build --no-cache kdc cloudera kerberos-client
 docker compose up -d
 ```
 
@@ -40,7 +39,8 @@ No `docker-compose.yml`, os valores padrão são:
 
 ## Validar Kerberos
 
-O container `cloudera` (imagem QuickStart) pode não ter `kinit/klist`. Para validação, use o container auxiliar `kerberos-client`.
+O serviço `cloudera` agora é uma imagem derivada local de `withinboredom/cloudera:quickstart` (com `krb5.conf` e `entrypoint` versionados no projeto).
+Como a base é legacy (CentOS 6), use o `kerberos-client` para validações com `kinit`/`klist`.
 
 Verificar principals no KDC:
 
@@ -82,7 +82,8 @@ docker exec -it kerberos-client bash -lc "kinit -kt /keytabs/hdfs.keytab hdfs/qu
 ## Observações
 
 - A imagem oficial `cloudera/quickstart` usa formato de manifesto legado e costuma falhar em Docker moderno.
-- Este projeto usa `withinboredom/cloudera:quickstart`, que é compatível com Docker atual.
+- Este projeto usa uma imagem local derivada de `withinboredom/cloudera:quickstart`.
+- As validações Kerberos são feitas no `kerberos-client` para evitar dependência de pacotes na imagem legacy do QuickStart.
 
 ## Troubleshooting
 

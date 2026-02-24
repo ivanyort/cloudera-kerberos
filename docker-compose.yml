@@ -25,7 +25,9 @@ services:
       retries: 10
 
   cloudera:
-    image: withinboredom/cloudera:quickstart
+    build:
+      context: ./cloudera
+    image: cloudera-quickstart-kerberos:local
     container_name: cloudera
     hostname: quickstart.cloudera.local
     depends_on:
@@ -41,14 +43,11 @@ services:
       KRB5_SERVICE_PASSWORD: service123
     volumes:
       - shared-keytabs:/keytabs
-      - ./cloudera/krb5.conf:/etc/krb5.conf:ro
-      - ./cloudera/entrypoint.sh:/entrypoint.sh:ro
     ports:
       - "7180:7180"
       - "8888:8888"
       - "8020:8020"
       - "50070:50070"
-    entrypoint: ["/bin/bash", "/entrypoint.sh"]
     tty: true
     stdin_open: true
 
