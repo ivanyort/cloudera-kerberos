@@ -73,16 +73,8 @@ docker exec -it kerberos-client bash -lc "kinit -kt /keytabs/hdfs.keytab hdfs/qu
 - `8020`: NameNode RPC
 - `50070`: NameNode UI
 - `88/tcp+udp`, `749/tcp`: Kerberos
-- `10000`: HiveServer2 (Thrift, opcional)
-- `9083`: Hive Metastore (Thrift, opcional)
-
-Para publicar as portas do Hive no host, adicione no serviço `cloudera`:
-
-```yaml
-ports:
-  - "10000:10000"
-  - "9083:9083"
-```
+- `10000`: HiveServer2 (Thrift)
+- `9083`: Hive Metastore (Thrift)
 
 ## Credenciais padrão
 
@@ -142,6 +134,15 @@ Depois do reboot:
 docker compose down -v
 docker compose up -d
 ```
+
+Validação completa do Hive:
+
+```bash
+docker exec -it cloudera bash -lc "service hive-metastore status; service hive-server2 status"
+docker exec -it cloudera bash -lc "beeline -u 'jdbc:hive2://127.0.0.1:10000/default' -n cloudera -p cloudera123 -e 'show databases;'"
+```
+
+Nota: nesta imagem legada, `service hive-metastore status` pode reportar `FAILED` mesmo com o processo ativo. Use `ss -lnt | grep 9083` e a query via `beeline` como validação final.
 
 Se o `hive-server2` não abrir `10000`, valide o log:
 
