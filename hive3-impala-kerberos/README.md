@@ -1,5 +1,10 @@
 # Hive 3 + Impala Dual-Mode (Kerberos + Open)
 
+Idiomas:
+- Português (este arquivo)
+- [English](README.en.md)
+- [Español (México)](README.es-MX.md)
+
 Ambiente local completo para testes com Talend e JDBC, com os dois modos ativos ao mesmo tempo:
 
 - Hive 3.1.3 com endpoint Kerberos e endpoint sem Kerberos

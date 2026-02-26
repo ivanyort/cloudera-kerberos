@@ -1,5 +1,10 @@
 # Cloudera + Kerberos em Docker
 
+Idiomas:
+- Português (este arquivo)
+- [English](README.en.md)
+- [Español (México)](README.es-MX.md)
+
 Este projeto sobe um ambiente com:
 
 - `kdc`: servidor MIT Kerberos (realm `CLOUDERA.LOCAL`)
